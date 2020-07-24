@@ -1,0 +1,8 @@
+{% extends 'oauth/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="container my-3">
+        <h1>Edit {{ client.name }} <a href="{% url 'view_client' client_id %}" class="btn btn-secondary">Back</a></h1>
+        {% crispy client_form client_form.helper %}
+    </div>
+{% endblock %}

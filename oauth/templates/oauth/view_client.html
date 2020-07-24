@@ -1,0 +1,167 @@
+{% extends 'oauth/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="container my-3">
+        <h1>View {{ client.name }} <a href="{% url 'edit_client' client_id %}" class="btn btn-primary">&#x1f58a; Edit</a></h1>
+        <p>
+            Client ID: <b>{{ client.clientId }}</b>
+        </p>
+        {% if svc_account %}
+            <p>
+                Service account username: <b>{{ svc_account.username }}</b>
+            </p>
+        {% endif %}
+        <p>
+            Website: <b><a href="{{ client.baseUrl }}">{{ client.baseUrl }}</a></b>
+        </p>
+        <p>
+            Public client: <b>{% if client.publicClient %}Yes{% else %}No{% endif %}</b>
+        </p>
+        {% if client_secret %}
+            <p>
+                <style>
+                    .auth-hide {
+                        color: transparent;
+                        text-shadow: 0 0 5px rgba(0,0,0,0.5);
+                    }
+                    .auth-hide:hover {
+                        color: unset;
+                        text-shadow: none;
+                    }
+                </style>
+
+                <form action="" method="post">
+                    Client secret: <b><span class="auth-hide">{{ client_secret.value }}</span></b>
+                    {% csrf_token %}
+                    <button type="submit" name="regen_client_secret" value="" class="ml-3 btn btn-sm btn-info">
+                        Regenerate
+                    </button>
+                </form>
+            </p>
+        {% endif %}
+        <h3>Description</h3>
+        <p>
+            {{ client.description }}
+        </p>
+        <h3>Redirect URIs</h3>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>URI</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if client.redirectUris %}
+                    {% for uri in client.redirectUris %}
+                        <tr>
+                            <td>{{ uri }}</td>
+                            <td>
+                                <form action="" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" name="delete_redirect_uri" value="{{ uri }}" class="btn btn-sm btn-danger">
+                                        &#x1f5d1; Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="2">No URIs</td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <h4>Add redirect URI</h4>
+        {% crispy redirect_uri_form redirect_uri_form.helper %}
+        <h3>Web origins</h3>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>URI</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if client.webOrigins %}
+                    {% for uri in client.webOrigins %}
+                        <tr>
+                            <td>{{ uri }}</td>
+                            <td>
+                                <form action="" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" name="delete_web_origin" value="{{ uri }}" class="btn btn-sm btn-danger">
+                                        &#x1f5d1; Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="2">No origins</td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <h4>Add web origin</h4>
+        {% crispy web_origin_form web_origin_form.helper %}
+        <hr>
+        <h3>Scope access</h3>
+        <p>
+            Please <a href="mailto:info@as207960.net">email us</a> to request scope access. You'll need to provide a
+            justification for each scope.
+        </p>
+        <h4>Default scopes</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>Scope</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if client.defaultClientScopes %}
+                    {% for scope in client.defaultClientScopes %}
+                        <tr>
+                            <td>{{ scope }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td>No scopes</td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <h4>Allowed scopes</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>Scope</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if client.optionalClientScopes %}
+                    {% for scope in client.optionalClientScopes %}
+                        <tr>
+                            <td>{{ scope }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td>No scopes</td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
