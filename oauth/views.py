@@ -8,6 +8,12 @@ import json
 import concurrent.futures
 
 
+REALMS = {
+    "test": "Test",
+    "master": "Production"
+}
+
+
 @login_required
 def index(request):
     access_token = django_keycloak_auth.clients.get_active_access_token(oidc_profile=request.user.oidc_profile)
@@ -21,6 +27,7 @@ def index(request):
     with concurrent.futures.ThreadPoolExecutor() as e:
         client_data = e.map(lambda c: {
             "obj": c,
+            "realm": REALMS.get(c.realm),
             "client": admin_client.get(
                 admin_client.get_full_url(f"auth/admin/realms/{c.realm}/clients/{c.client_id}"),
             )
