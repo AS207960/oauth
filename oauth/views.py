@@ -83,7 +83,7 @@ def create_client(request):
                 user=request.user
             )
             client_obj.save()
-            return redirect('edit_client', client_obj.id)
+            return redirect('view_client', client_obj.id)
     else:
         form = forms.ClientCreateForm()
 

@@ -1,0 +1,133 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oauth-nginx-conf
+data:
+  nginx.conf: |
+    user  nginx;
+    worker_processes  4;
+
+    error_log  /var/log/nginx/error.log warn;
+    pid        /var/run/nginx.pid;
+
+    events {
+      worker_connections  4096;
+    }
+
+    http {
+      include       /etc/nginx/mime.types;
+      default_type  application/octet-stream;
+
+      log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for"';
+
+      access_log  /var/log/nginx/access.log  main;
+      sendfile        on;
+      tcp_nopush   on;
+      keepalive_timeout  65;
+      gzip  on;
+      gzip_proxied no_etag;
+      client_max_body_size 0;
+
+      server {
+        listen       [::]:80;
+        server_name  oauth.as207960.net;
+
+        root /data/;
+
+        location / {
+          try_files $uri @proxy_to_app;
+        }
+
+        location @proxy_to_app {
+          proxy_pass      http://oauth-django:8000;
+
+          proxy_http_version 1.1;
+
+          proxy_redirect off;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Host $server_name;
+          proxy_set_header X-Forwarded-Proto https;
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth-nginx
+  labels:
+    app: oauth-management
+    part: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth-management
+      part: nginx
+  template:
+    metadata:
+      annotations:
+        cni.projectcalico.org/ipv6pools: "[\"default-ipv6-ippool\"]"
+      labels:
+        app: oauth-management
+        part: nginx
+    spec:
+      volumes:
+        - name: static
+          persistentVolumeClaim:
+            claimName: oauth-django-static
+        - name: conf
+          configMap:
+            name: oauth-nginx-conf
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: "/data/static/"
+              name: static
+            - mountPath: "/etc/nginx/nginx.conf"
+              name: conf
+              subPath: "nginx.conf"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth-nginx
+  labels:
+    app: oauth-management
+    part: nginx
+spec:
+  selector:
+    app: oauth-management
+    part: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+      name: nginx
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: oauth-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+spec:
+  tls:
+    - hosts:
+        - oauth.as207960.net
+      secretName: oauth-tls
+  rules:
+  - host: oauth.as207960.net
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: oauth-nginx
+          servicePort: 80

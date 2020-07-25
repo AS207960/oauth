@@ -1,0 +1,113 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: oauth-django-static
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: oauth-django-conf
+data:
+  HOST: "oauth.as207960.net,oauth-nginx"
+  DJANGO_SETTINGS_MODULE: as207960_oauth.settings
+  EXTERNAL_URL: "https://oauth.as207960.net"
+  SENTRY_ENVIRONMENT: "prod"
+  KEYCLOAK_SERVER_URL: "https://sso.as207960.net/"
+  KEYCLOAK_REALM: master
+  KEYCLOAK_SCOPES: "openid email profile"
+  KEYCLOAK_CLIENT_ID: "oauth-management"
+  DB_HOST: "postgres"
+  DB_NAME: "oauth"
+#  EMAIL_HOST: "mx.postal.as207960.net"
+#  EMAIL_HOST_USER: "apikey"
+#  EMAIL_PORT: "25"
+#  EMAIL_FROM: "Glauca Domains <domains@glauca.digital>"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth-django
+  labels:
+    app: oauth-management
+    part: django
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth-management
+      part: django
+  template:
+    metadata:
+      annotations:
+        cni.projectcalico.org/ipv6pools: "[\"default-ipv6-ippool\"]"
+      labels:
+        app: oauth-management
+        part: django
+    spec:
+      volumes:
+        - name: static
+          persistentVolumeClaim:
+            claimName: oauth-django-static
+      initContainers:
+        - name: django
+          image: as207960/oauth-management:(version)
+          imagePullPolicy: Always
+          command: ["sh", "-c", "python3 manage.py collectstatic --noinput && python3 manage.py migrate && python3 manage.py sync-keycloak"]
+          volumeMounts:
+            - mountPath: "/app/static/"
+              name: static
+          envFrom:
+            - configMapRef:
+                name: oauth-django-conf
+            - secretRef:
+                name: oauth-db-creds
+              prefix: "DB_"
+            - secretRef:
+                name: oauth-django-secret
+            - secretRef:
+                name: oauth-keycloak
+              prefix: "KEYCLOAK_"
+      containers:
+        - name: gunicorn
+          image: as207960/oauth-management:(version)
+          imagePullPolicy: Always
+          command: ["gunicorn", "-w", "8", "-b", "[::]:8000", "--forwarded-allow-ips", "*", "--access-logfile", "-", "--log-level=debug", "--timeout=90", "as207960_oauth.wsgi:application"]
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - mountPath: "/app/static/"
+              name: static
+          envFrom:
+            - configMapRef:
+                name: oauth-django-conf
+            - secretRef:
+                name: oauth-db-creds
+              prefix: "DB_"
+            - secretRef:
+                name: oauth-django-secret
+            - secretRef:
+                name: oauth-keycloak
+              prefix: "KEYCLOAK_"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth-django
+  labels:
+    app: oauth-management
+    part: django
+spec:
+  selector:
+    app: oauth-management
+    part: django
+  ports:
+    - port: 8000
+      targetPort: 8000
+

@@ -7,7 +7,6 @@ import crispy_forms.bootstrap
 
 class ClientCreateForm(forms.Form):
     realm = forms.ChoiceField(choices=(
-        ("dev", "Development"),
         ("test", "Test"),
         ("master", "Production"),
     ))
