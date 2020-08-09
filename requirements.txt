@@ -7,3 +7,4 @@ django-crispy-forms
 django-xff
 retry
 requests
+django-cockroachdb==3.1.*

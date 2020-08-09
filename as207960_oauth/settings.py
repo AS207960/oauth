@@ -91,11 +91,12 @@ WSGI_APPLICATION = 'as207960_oauth.wsgi.application'
 
 DATABASES = {
     'default': {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django_cockroachdb",
         "HOST": os.getenv("DB_HOST", "localhost"),
         "NAME": os.getenv("DB_NAME", "oauth"),
         "USER": os.getenv("DB_USER", "oauth"),
         "PASSWORD": os.getenv("DB_PASS"),
+        "PORT": '26257',
     }
 }
 
