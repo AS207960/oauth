@@ -19,17 +19,6 @@
         </p>
         {% if client_secret %}
             <p>
-                <style>
-                    .auth-hide {
-                        color: transparent;
-                        text-shadow: 0 0 5px rgba(0,0,0,0.5);
-                    }
-                    .auth-hide:hover {
-                        color: unset;
-                        text-shadow: none;
-                    }
-                </style>
-
                 <form action="" method="post">
                     Client secret: <b><span class="auth-hide">{{ client_secret.value }}</span></b>
                     {% csrf_token %}

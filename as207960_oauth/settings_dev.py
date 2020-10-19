@@ -146,6 +146,9 @@ DEFAULT_FROM_EMAIL = "AS207960 OAuth <oauth@as207960.net>"
 with open(os.path.join(BASE_DIR, "secrets/keycloak.json")) as f:
     keycloak_conf = json.load(f)
 
+with open(os.path.join(BASE_DIR, "secrets/pat_dev_priv.pem")) as f:
+    PAT_PRIV = f.read()
+
 KEYCLOAK_SERVER_URL = keycloak_conf["server_url"]
 KEYCLOAK_REALM = keycloak_conf["realm"]
 OIDC_CLIENT_ID = keycloak_conf["client_id"]

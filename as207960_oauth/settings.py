@@ -164,3 +164,6 @@ XFF_STRICT = True
 # EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", False)
 # EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
 # DEFAULT_FROM_EMAIL = os.getenv("EMAIL_FROM", "AS207960 Domains <domains@as207960.net>")
+
+with open(os.getenv("PAT_PRIV_LOCATION"), "r") as f:
+    PAT_PRIV = f.read()

@@ -3,12 +3,24 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>AS207960 OAuth</title>
+    <title>Glauca / AS207960 OAuth</title>
     <meta name="description" content="AS207960 OAuth management">
 
     <link rel="icon" href="https://as207960.net/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://as207960.net/assets/css/bootstrap.css">
+
+    <style>
+        .auth-hide {
+            color: transparent;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .auth-hide:hover {
+            color: unset;
+            text-shadow: none;
+        }
+    </style>
 </head>
 <body>
 <header>
@@ -16,15 +28,19 @@
         <div class="container">
             <a class="navbar-brand" href="https://glauca.digital">
                 <img src="https://as207960.net/assets/img/logo.svg" height="75" alt="">
-                <span class="navbar-brand mb-0 h1">AS207960</span>
+                <span class="navbar-brand mb-0 h1">Glauca / AS207960</span>
             </a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'index' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'personal_tokens' %}">Personal tokens</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="https://portal.glauca.digital" target="_blank">Service portal</a>

@@ -29,6 +29,7 @@ data:
 #  EMAIL_HOST_USER: "apikey"
 #  EMAIL_PORT: "25"
 #  EMAIL_FROM: "Glauca Domains <domains@glauca.digital>"
+  PAT_PRIV_LOCATION: "/pat-key/privkey.pem"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -55,6 +56,9 @@ spec:
         - name: static
           persistentVolumeClaim:
             claimName: oauth-django-static
+        - name: privkey
+          secret:
+            secretName: oauth-pat-priv
       initContainers:
         - name: django
           image: as207960/oauth-management:(version)
@@ -63,6 +67,8 @@ spec:
           volumeMounts:
             - mountPath: "/app/static/"
               name: static
+            - mountPath: "/pat-key/"
+              name: privkey
           envFrom:
             - configMapRef:
                 name: oauth-django-conf
@@ -84,6 +90,8 @@ spec:
           volumeMounts:
             - mountPath: "/app/static/"
               name: static
+            - mountPath: "/pat-key/"
+              name: privkey
           envFrom:
             - configMapRef:
                 name: oauth-django-conf

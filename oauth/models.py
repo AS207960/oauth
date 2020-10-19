@@ -1,8 +1,10 @@
 from django.db import models
 from django.urls import reverse
+from django.conf import settings
 from django.contrib.auth import get_user_model
 import uuid
 import django_keycloak_auth.clients
+import as207960_utils.models
 
 
 def sync_resource_to_keycloak(self, display_name, resource_type, scopes, urn, view_name, super_save, args, kwargs):
@@ -130,3 +132,13 @@ class OAuthClient(models.Model):
     def delete(self, *args, **kwargs):
         super().delete(*args, *kwargs)
         delete_resource(self.resource_id)
+
+
+class PersonalAccessToken(models.Model):
+    id = as207960_utils.models.TypedUUIDField("oauth_pat", primary_key=True)
+    revoked = models.BooleanField(blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name

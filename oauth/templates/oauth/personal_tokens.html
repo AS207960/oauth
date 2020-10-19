@@ -1,0 +1,78 @@
+{% extends "oauth/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <section class="stripe">
+        <div class="container py-3">
+            <div class="jumbotron my-0">
+                <h1>Personal access tokens</h1>
+                <div class="btn-group">
+                    <a href="{% url 'create_pat' %}" class="btn btn-primary">New token</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="container mt-5 mb-3">
+        {% if new_token %}
+            <div class="alert alert-success" role="alert">
+                <h4 class="alert-heading">New token created</h4>
+                <p>Make a note of your access token now, it will <em>never</em> be shown again.</p>
+                <p><code>{{ new_token }}</code></p>
+            </div>
+        {% endif %}
+        <h2>Active tokens</h2>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if active_pats %}
+                    {% for pat in active_pats %}
+                        <tr>
+                            <td>{{ pat.id }}</td>
+                            <td>{{ pat.name }}</td>
+                            <td style="width: 1px">
+                                <a href="{% url 'revoke_pat' pat.id %}" class="btn btn-danger btn-sm">&#x1f5d1;
+                                    Revoke</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3">No active tokens</td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <h2>Revoked tokens</h2>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if revoked_pats %}
+                    {% for pat in revoked_pats %}
+                        <tr>
+                            <td>{{ pat.id }}</td>
+                            <td style="text-decoration: line-through">{{ pat.name }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="2">No revoked tokens</td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

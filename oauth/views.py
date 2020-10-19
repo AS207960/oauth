@@ -1,17 +1,28 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.conf import settings
+from django.utils import timezone
+from django.http import HttpResponse, HttpResponseForbidden
 import django_keycloak_auth.clients
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from . import forms, models
+import keycloak.exceptions
 import uuid
 import json
 import concurrent.futures
+import jose.jwt
+import jose.backends
+import jose.constants
 
 
 REALMS = {
     "test": "Test",
     "master": "Production"
 }
+
+PAT_JWK = jose.backends.ECKey(settings.PAT_PRIV, algorithm=jose.constants.ALGORITHMS.ES256)
 
 
 @login_required
@@ -35,6 +46,24 @@ def index(request):
 
     return render(request, "oauth/index.html", {
         "clients": client_data
+    })
+
+
+@login_required
+def personal_tokens(request):
+    pats = models.PersonalAccessToken.objects.filter(user=request.user)
+
+    active_pats = pats.filter(revoked=False)
+    revoked_pats = pats.filter(revoked=True)
+
+    new_token = None
+    if "new_token" in request.session:
+        new_token = request.session.pop("new_token")
+
+    return render(request, "oauth/personal_tokens.html", {
+        "active_pats": active_pats,
+        "revoked_pats": revoked_pats,
+        "new_token": new_token
     })
 
 
@@ -236,3 +265,107 @@ def edit_client(request, client_id):
         "client": r,
         "client_form": form
     })
+
+
+@login_required
+def create_pat(request):
+    if request.method == "POST":
+        pat_form = forms.PATCreateForm(request.POST)
+        if pat_form.is_valid():
+            new_pat = models.PersonalAccessToken(
+                user=request.user,
+                name=pat_form.cleaned_data['pat_name'],
+                revoked=False
+            )
+            new_pat.save()
+
+            pat_token = jose.jwt.encode({
+                "sub": request.user.username,
+                "jti": new_pat.id,
+                "iat": timezone.now(),
+                "nbf": timezone.now(),
+            }, key=PAT_JWK.to_dict(), algorithm="ES256", headers={
+                "iss": "as207960.net"
+            })
+            request.session["new_token"] = pat_token
+
+            return redirect('personal_tokens')
+    else:
+        pat_form = forms.PATCreateForm()
+
+    return render(request, "oauth/create_pat.html", {
+        "pat_form": pat_form
+    })
+
+
+@login_required
+def revoke_pat(request, pat_id):
+    pat = get_object_or_404(models.PersonalAccessToken, id=pat_id)
+
+    if pat.user != request.user:
+        raise PermissionDenied()
+
+    if request.method == "POST" and request.POST.get("revoke") == "true":
+        pat.revoked = True
+        pat.save()
+        return redirect('personal_tokens')
+
+    return render(request, "oauth/revoke_pat.html", {
+        "token": pat
+    })
+
+
+def pat_jwks(request):
+    return HttpResponse(json.dumps({
+        "keys": [PAT_JWK.public_key().to_dict()]
+    }), content_type="application/json")
+
+
+@csrf_exempt
+@require_POST
+def verify_pat(request):
+    auth = request.META.get("HTTP_AUTHORIZATION")
+    if not auth or not auth.startswith("Bearer "):
+        return HttpResponseForbidden()
+
+    try:
+        claims = django_keycloak_auth.clients.verify_token(
+            auth[len("Bearer "):].strip()
+        )
+    except keycloak.exceptions.KeycloakClientError:
+        return HttpResponseForbidden()
+
+    if "verify-pat" not in claims.get("resource_access", {}).get(
+            settings.OIDC_CLIENT_ID, {}
+    ).get("roles", []):
+        return HttpResponseForbidden()
+
+    pat = request.POST.get("token")
+    
+    if not pat:
+        return HttpResponseForbidden()
+
+    inactive_resp = HttpResponse(json.dumps({
+            "active": False
+        }), content_type="application/json")
+
+    try:
+        pat_data = jose.jwt.decode(pat, PAT_JWK.public_key().to_dict(), algorithms="ES256")
+    except jose.jwt.JWSError:
+        return inactive_resp
+
+    if "jti" not in pat_data:
+        return inactive_resp
+
+    pat = models.PersonalAccessToken.objects.filter(id=pat_data["jti"]).first()
+    if not pat:
+        return inactive_resp
+
+    if pat.revoked:
+        return inactive_resp
+
+    return HttpResponse(json.dumps({
+        "active": True,
+        "jti": pat.id,
+        "sub": pat.user.username
+    }), content_type="application/json")

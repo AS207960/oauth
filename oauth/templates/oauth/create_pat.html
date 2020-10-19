@@ -1,0 +1,8 @@
+{% extends 'oauth/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="container my-3">
+        <h1>Create a new personal access token</h1>
+        {% crispy pat_form pat_form.helper %}
+    </div>
+{% endblock %}

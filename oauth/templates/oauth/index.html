@@ -4,11 +4,19 @@
     <section class="stripe">
         <div class="container py-3">
             <div class="jumbotron my-0">
-                <h1 class="display-4">AS207960 OAuth</h1>
-                <h1>My clients</h1>
+                <h1 class="display-4">AS207960 Developers</h1>
                 <hr>
+                <h1>My clients</h1>
                 <div class="btn-group">
                     <a href="{% url 'create_client' %}" class="btn btn-primary">New client</a>
+                </div>
+                <hr>
+                <p>
+                    Looking for the API docs, or just want to access your own account's data without OAuth?
+                </p>
+                <div class="btn-group">
+                    <a href="https://docs.glauca.digital/api/" class="btn btn-primary">API Docs</a>
+                    <a href="{% url 'personal_tokens' %}" class="btn btn-secondary">Personal access tokens</a>
                 </div>
             </div>
         </div>

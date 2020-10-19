@@ -1,0 +1,16 @@
+{% extends 'oauth/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="container my-3">
+        <h1>Revoke a personal access token</h1>
+        <h2>Token name: {{ token.name }}</h2>
+        <p>Once this token is revoked it cannot be undone.</p>
+        <form action="" method="post">
+            {% csrf_token %}
+            <div class="btn-group">
+                <a href="{% url 'personal_tokens' %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" name="revoke" value="true" class="btn btn-danger">Revoke</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
