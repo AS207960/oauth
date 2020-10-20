@@ -341,13 +341,13 @@ def verify_pat(request):
         return HttpResponseForbidden()
 
     pat = request.POST.get("token")
-    
+
     if not pat:
         return HttpResponseForbidden()
 
     inactive_resp = HttpResponse(json.dumps({
             "active": False
-        }), content_type="application/json")
+    }), content_type="application/json")
 
     try:
         pat_data = jose.jwt.decode(pat, PAT_JWK.public_key().to_dict(), algorithms="ES256")
