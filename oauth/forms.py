@@ -24,9 +24,10 @@ class ClientCreateForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.helper = crispy_forms.helper.FormHelper()
+        self.helper.use_custom_control = False
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-lg-3'
-        self.helper.field_class = 'col-lg-9'
+        self.helper.field_class = 'col-lg-9 my-1'
         self.helper.layout = crispy_forms.layout.Layout(
             'realm',
             'client_name',
@@ -45,9 +46,10 @@ class PATCreateForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.helper = crispy_forms.helper.FormHelper()
+        self.helper.use_custom_control = False
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-lg-3'
-        self.helper.field_class = 'col-lg-9'
+        self.helper.field_class = 'col-lg-9 my-1'
         self.helper.layout = crispy_forms.layout.Layout(
             'pat_name',
         )
@@ -70,9 +72,10 @@ class ClientEditForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.helper = crispy_forms.helper.FormHelper()
+        self.helper.use_custom_control = False
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-lg-3'
-        self.helper.field_class = 'col-lg-9'
+        self.helper.field_class = 'col-lg-9 my-1'
         self.helper.layout = crispy_forms.layout.Layout(
             'client_name',
             'client_description',
@@ -90,9 +93,10 @@ class ClientRedirectUriForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.helper = crispy_forms.helper.FormHelper()
+        self.helper.use_custom_control = False
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-lg-3'
-        self.helper.field_class = 'col-lg-9'
+        self.helper.field_class = 'col-lg-9 my-1'
         self.helper.layout = crispy_forms.layout.Layout(
             'redirect_uri',
         )
@@ -107,9 +111,10 @@ class ClientWebOriginForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         self.helper = crispy_forms.helper.FormHelper()
+        self.helper.use_custom_control = False
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-lg-3'
-        self.helper.field_class = 'col-lg-9'
+        self.helper.field_class = 'col-lg-9 my-1'
         self.helper.layout = crispy_forms.layout.Layout(
             'web_origin',
         )
