@@ -8,5 +8,5 @@ django-xff
 retry
 requests
 django-cockroachdb==3.1.*
-git+https://github.com/AS207960/python-utils@bc2d1a9d3b16978ab742145a19ef828ddd812765
+git+https://github.com/AS207960/python-utils@e3fa7518adefb780263ef44ae017ea20a1175254
 python-jose[cryptography]
