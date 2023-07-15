@@ -1,15 +1,4 @@
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: oauth-django-static
-spec:
-  storageClassName: standard
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 1Gi
----
+
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -25,11 +14,14 @@ data:
   KEYCLOAK_CLIENT_ID: "oauth-management"
   DB_HOST: "cockroachdb"
   DB_NAME: "oauth"
-#  EMAIL_HOST: "mx.postal.as207960.net"
-#  EMAIL_HOST_USER: "apikey"
-#  EMAIL_PORT: "25"
-#  EMAIL_FROM: "Glauca Domains <domains@glauca.digital>"
   PAT_PRIV_LOCATION: "/pat-key/privkey.pem"
+  S3_ENDPOINT: "https://s3.as207960.net"
+  S3_REGION: "garage"
+  S3_BUCKET: "oauth-django"
+  S3_ACCESS_KEY_ID: "GK34eedff799d017779c446557"
+  S3_CUSTOM_DOMAIN: "oauth-django.content.as207960.net"
+  STATIC_URL: "https://oauth-django.content.as207960.net/"
+  MEDIA_URL: "https://oauth-django.content.as207960.net/"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -53,9 +45,6 @@ spec:
         part: django
     spec:
       volumes:
-        - name: static
-          persistentVolumeClaim:
-            claimName: oauth-django-static
         - name: privkey
           secret:
             secretName: oauth-pat-priv
@@ -65,8 +54,6 @@ spec:
           imagePullPolicy: Always
           command: ["sh", "-c", "python3 manage.py collectstatic --noinput && python3 manage.py migrate && python3 manage.py sync-keycloak"]
           volumeMounts:
-            - mountPath: "/app/static/"
-              name: static
             - mountPath: "/pat-key/"
               name: privkey
           envFrom:
@@ -80,6 +67,8 @@ spec:
             - secretRef:
                 name: oauth-keycloak
               prefix: "KEYCLOAK_"
+            - secretRef:
+                name: oauth-s3
       containers:
         - name: gunicorn
           image: as207960/oauth-management:(version)
@@ -88,8 +77,6 @@ spec:
           ports:
             - containerPort: 8000
           volumeMounts:
-            - mountPath: "/app/static/"
-              name: static
             - mountPath: "/pat-key/"
               name: privkey
           envFrom:
@@ -103,6 +90,8 @@ spec:
             - secretRef:
                 name: oauth-keycloak
               prefix: "KEYCLOAK_"
+            - secretRef:
+                name: oauth-s3
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -139,4 +128,50 @@ spec:
   ports:
     - port: 8000
       targetPort: 8000
-
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: oauth-django
+spec:
+  podSelector:
+    matchLabels:
+      app: oauth
+      part: django
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: oauth-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "gts"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+spec:
+  tls:
+    - hosts:
+        - oauth.as207960.net
+      secretName: oauth-tls
+  rules:
+    - host: oauth.as207960.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: oauth-django
+                port:
+                  number: 8000

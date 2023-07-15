@@ -10,3 +10,6 @@ requests
 django-cockroachdb==3.1.*
 git+https://github.com/AS207960/python-utils@dad8e208d34637dced1d4bba1aa3a750112e7f08
 python-jose[cryptography]
+django-storages
+boto3
+crispy-bootstrap4
